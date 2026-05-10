@@ -11,7 +11,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Java (Crucial for Android)
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -27,15 +27,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libltdl-dev libffi-dev libssl-dev libtool autoconf automake pkg-config zip unzip
 
-      - name: Install Buildozer & Stable Cython
+      - name: Install Buildozer & Cython
         run: pip install --upgrade buildozer cython==0.29.33 virtualenv
 
+      - name: The Master License Jugad
+        run: |
+          # 1. Force fix the spec file just in case
+          sed -i 's/.*android.accept_sdk_license.*/android.accept_sdk_license = True/g' buildozer.spec || true
+          
+          # 2. Pre-build the hidden Android directories
+          mkdir -p .buildozer/android/platform/android-sdk/licenses
+          
+          # 3. Inject Google's verified license hashes directly into the system
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
+
       - name: Compile the APK
-        run: buildozer -v android debug
+        run: yes | buildozer -v android debug
 
       - name: Upload the Finished App
         uses: actions/upload-artifact@v4
         with:
           name: SpotiClone-APK
           path: bin/*.apk
-          
