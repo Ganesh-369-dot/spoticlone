@@ -5,18 +5,33 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Build inside Buildozer Container
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Setup Java (Crucial for Android)
+        uses: actions/setup-java@v3
         with:
-          command: pip3 install --user --upgrade Cython==0.29.33 virtualenv; buildozer android debug
-          buildozer_version: master
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Linux Compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libltdl-dev libffi-dev libssl-dev libtool autoconf automake pkg-config zip unzip
+
+      - name: Install Buildozer & Stable Cython
+        run: pip install --upgrade buildozer cython==0.29.33 virtualenv
+
+      - name: Compile the APK
+        run: buildozer -v android debug
 
       - name: Upload the Finished App
         uses: actions/upload-artifact@v4
