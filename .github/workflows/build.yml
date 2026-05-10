@@ -22,27 +22,31 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Linux Compilers
+      - name: Install Compilers & Buildozer
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libltdl-dev libffi-dev libssl-dev libtool autoconf automake pkg-config zip unzip
+          sudo apt-get install -y build-essential libltdl-dev libffi-dev libssl-dev zip unzip
+          pip install --upgrade buildozer cython==0.29.33 virtualenv
 
-      - name: Install Buildozer & Cython
-        run: pip install --upgrade buildozer cython==0.29.33 virtualenv
-
-      - name: The Master License Jugad
+      - name: Auto-Generate Perfect Spec File
         run: |
-          # 1. Force fix the spec file just in case
-          sed -i 's/.*android.accept_sdk_license.*/android.accept_sdk_license = True/g' buildozer.spec || true
+          # 1. Delete your uploaded file to prevent formatting clashes
+          rm -f buildozer.spec
           
-          # 2. Pre-build the hidden Android directories
-          mkdir -p .buildozer/android/platform/android-sdk/licenses
+          # 2. Force Buildozer to build a pristine, fresh config
+          buildozer init
           
-          # 3. Inject Google's verified license hashes directly into the system
-          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          # 3. Inject your exact app rules directly into the fresh file
+          sed -i 's/title = My Application/title = SpotiClone Pro/g' buildozer.spec
+          sed -i 's/package.name = myapp/package.name = spoticlone/g' buildozer.spec
+          sed -i 's/package.domain = org.test/package.domain = org.ganesh/g' buildozer.spec
+          sed -i 's/requirements = python3,kivy/requirements = python3,flask,requests,yt-dlp,ytmusicapi/g' buildozer.spec
+          
+          # 4. The Master License Unlock
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
 
       - name: Compile the APK
-        run: yes | buildozer -v android debug
+        run: buildozer -v android debug
 
       - name: Upload the Finished App
         uses: actions/upload-artifact@v4
