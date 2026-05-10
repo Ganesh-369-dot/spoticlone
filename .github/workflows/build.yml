@@ -1,15 +1,21 @@
 name: Build SpotiClone APK
 
 on:
-  workflow_dispatch: # This creates a manual 'Build' button
+  workflow_dispatch: 
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Setup Java (The Missing Piece)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -21,8 +27,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libltdl-dev libffi-dev libssl-dev libtool autoconf automake pkg-config zip unzip
 
-      - name: Install Buildozer
-        run: pip install --upgrade buildozer cython virtualenv
+      - name: Install Buildozer & Stable Cython
+        run: pip install --upgrade buildozer cython==0.29.33 virtualenv
 
       - name: Auto-Accept Android Licenses
         run: |
